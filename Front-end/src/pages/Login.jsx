@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Shield, Zap, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import logo from '../assets/logo.png';
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom';
@@ -105,11 +104,10 @@ const LoginPage = () => {
           {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <img src={logo} alt="" />
+              <p className='font-bold text-white'>SV</p>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">NerathiX</h1>
-              <p className="text-sm text-gray-600">StudyVault Platform</p>
+              <h1 className="text-2xl font-bold text-gray-800">StudyVault</h1>
             </div>
           </div>
 
@@ -166,7 +164,7 @@ const LoginPage = () => {
           {/* Form Header */}
           <div className="text-center mb-8">
             <h3 className="text-3xl font-bold text-gray-800 mb-2">
-              Welcome to <span className="text-indigo-600">NerathiX</span>
+              Welcome to <span className="text-indigo-600">StudyVault</span>
             </h3>
             <p className="text-gray-600">Access thousands of study materials</p>
           </div>
