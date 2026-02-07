@@ -1,0 +1,848 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Home, TrendingUp, Star, Upload, User, Search, Grid, List,
+  Eye, Download, Heart, Users, FileText, X,
+  Mail, Award, Settings, MapPin,
+  Phone, Github,
+  Calendar
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+import axios from 'axios';
+
+
+const StatCard = ({ icon, label, value, color }) => {
+  const colors = {
+    blue: "from-blue-50 to-blue-100 border-blue-200 text-blue-600",
+    green: "from-green-50 to-green-100 border-green-200 text-green-600",
+    purple: "from-purple-50 to-purple-100 border-purple-200 text-purple-600",
+    orange: "from-orange-50 to-orange-100 border-orange-200 text-orange-600",
+    gray: "from-gray-50 to-gray-100 border-gray-200 text-gray-600",
+  };
+
+  const colorClasses = colors[color] || colors.gray;
+  const textColorClass = colorClasses.split(" ")[3] || "text-gray-600";
+
+  return (
+    <div className={`bg-gradient-to-br ${colorClasses} rounded-xl p-4 border-2 transition hover:shadow-md`}>
+      <div className="flex items-center gap-2 mb-1">
+        {icon}
+        <span className="font-semibold text-gray-900 text-sm">{label}</span>
+      </div>
+      <p className={`text-2xl font-bold ${textColorClass}`}>{value}</p>
+    </div>
+  );
+};
+
+const Dashboard = () => {
+  const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState('grid');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('All Subjects');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem("activeTab") || 'Dashboard';
+  });
+  const [favorites, setFavorites] = useState([1, 3]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [myUploads, setMyUploads] = useState([]);
+  const [Popular, setPopular] = useState([]);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [user, setUser] = useState({
+    fullName: "",
+    stream: "",
+    address: "",
+    email: "",
+    contactNumber: "",
+    github: "",
+    about: ""
+  });
+
+  useEffect(() => {
+    localStorage.setItem("activeTab", activeTab);
+  }, [activeTab])
+  const handleEdit = () => setIsEditing(true);
+  const handleSave = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Unauthorized");
+
+      await axios.put(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/profile`, user,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Profile updated successfully!");
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Faild to update profile:", err);
+      toast.error("Failed to update profile. Try again");
+    }
+  };
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          navigate('/login');
+          return;
+        }
+        const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/profile`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const profile = res.data;
+        if (!profile || !profile.email) {
+          toast.error("Invalid profile data. Please login again.");
+          localStorage.removeItem("token");
+          navigate('/login');
+          return
+        }
+        setUser({
+          _id: profile._id,
+          fullName: profile.fullName || "",
+          email: profile.email,
+          contactNumber: profile.contactNumber || "",
+          address: profile.address || "",
+          about: profile.about || "",
+          github: profile.github || "",
+          stream: profile.stream || ""
+        });
+        // console.log("profileData:",res.data)
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        if (err.response?.status === 401) {
+          toast.error("Session expired. Please login again.");
+          localStorage.removeItem("token");
+          navigate("/login");
+        } else if (err.response?.status === 404) {
+          toast.error("User profile not found.");
+          localStorage.removeItem("token");
+          navigate("/login");
+        } else {
+          toast.error("Failed to load profile. Please try again.");
+        }
+      }
+    }
+    fetchProfile();
+  }, [navigate])
+
+  const [studyMaterials, setStudyMaterials] = useState([]);
+
+  // fetch studymaterial
+  useEffect(() => {
+    const fetchStudyMaterials = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          navigate("/login");
+          return;
+        }
+
+        const res = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/materials`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const materials = res.data;
+
+        if (!materials || materials.length === 0) {
+          toast.error("No study materials found.");
+          setStudyMaterials([]);
+          return;
+        }
+        const formattedMaterials = materials.map((m) => ({
+          id: m._id,
+          title: m.title || m.fileName || "Untitled",
+          subject: m.subject || "Unknown",
+          description: m.description || "",
+          author: m.author?.fullName || "Unknown",
+          date: m.date ? new Date(m.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "",
+          downloads: m.downloads || 0,
+          views: m.views || 0,
+          fileUrl: m.fileUrl,
+        }));
+
+        setStudyMaterials(formattedMaterials);
+
+      } catch (err) {
+        console.error("Error fetching study materials:", err);
+
+        if (err.response?.status === 401) {
+          toast.error("Session expired. Please login again.");
+          localStorage.removeItem("token");
+          navigate("/login");
+        } else if (err.response?.status === 404) {
+          toast.error("Study materials not found.");
+          setStudyMaterials([]);
+        } else {
+          toast.error("Failed to load study materials. Please try again.");
+        }
+      }
+    };
+
+    fetchStudyMaterials();
+  }, [navigate]);
+
+  // fetch favorite study material
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/materials/favorites`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setFavorites(res.data.map((m) => m._id));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchFavorites();
+  }, []);
+
+  // set / remove favorite
+  const toggleFavorite = async (id) => {
+    if (!id) {
+      console.error("Cannot toggle favorite: id is missing");
+      toast.error("Invalid material ID");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Unauthorized");
+
+      // Update backend
+      await axios.put(
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/materials/favorite/${id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Update frontend state immediately
+      setFavorites((prev) =>
+        prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]
+      );
+    } catch (err) {
+      console.error("Error toggling favorite:", err);
+      toast.error("Failed to update favorites.");
+    }
+  };
+
+  // fetch my uploads
+  useEffect(() => {
+    const getMyUpload = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/materials/my-uploads`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const formattedUploads = res.data.map(m => ({
+          id: m._id,
+          title: m.title || m.fileName || "Untitled",
+          subject: m.subject || "Unknown",
+          description: m.description || "",
+          author: m.author?.fullName || "Unknown",
+          date: m.date ? new Date(m.date).toLocaleDateString("en-US") : "",
+          downloads: m.downloads || 0,
+          views: m.views || 0,
+          fileUrl: m.fileUrl,
+        }));
+
+        setMyUploads(formattedUploads);
+      } catch (err) {
+        console.error("Error fetching my upload", err);
+        toast.error("Failed to fetch uploads");
+      }
+    };
+
+    getMyUpload();
+  }, []);
+
+
+  // fetch popular study material
+  useEffect(() => {
+    const getPopular = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/materials/popular`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const formattedUploads = res.data.map(m => ({
+          id: m._id,
+          title: m.title || m.fileName || "Untitled",
+          subject: m.subject || "Unknown",
+          description: m.description || "",
+          author: m.author?.fullName || "Unknown",
+          date: m.date ? new Date(m.date).toLocaleDateString("en-US") : "",
+          downloads: m.downloads || 0,
+          views: m.views || 0,
+          fileUrl: m.fileUrl,
+        }));
+
+        setPopular(formattedUploads);
+      } catch (err) {
+        console.error("Error fetching my upload", err);
+        toast.error("Failed to fetch uploads");
+      }
+    };
+
+    getPopular();
+  }, []);
+
+
+
+  const subjects = ['All Subjects', 'Data Structures', 'DBMS', 'Computer-science', 'Machine Learning', 'Algorithms','mathematics','hindi','science','english'];
+
+  const getFilteredMaterials = () => {
+    let materials = studyMaterials;
+
+    if (activeTab === 'Favorites') {
+      materials = materials.filter((m) => favorites.includes(m.id));
+    } else if (activeTab === 'Popular') {
+      materials = Popular;
+    } else if (activeTab === 'My Uploads') {
+      materials = myUploads;
+    }
+
+    return materials.filter((m) => {
+      const matchesSubject = selectedSubject === 'All Subjects' || m.subject === selectedSubject;
+      const q = searchQuery.trim().toLowerCase();
+      const matchesSearch =
+        !q ||
+        m.title.toLowerCase().includes(q) ||
+        m.subject.toLowerCase().includes(q) ||
+        m.description.toLowerCase().includes(q);
+      return matchesSubject && matchesSearch;
+    });
+  };
+
+  const filteredMaterials = getFilteredMaterials();
+
+
+
+  const handleDownload = async (material) => {
+  if (!material.fileUrl) {
+    toast.error("File not found");
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Unauthorized");
+
+    // 1️⃣ Update download count in backend
+    await axios.put(
+      `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/materials/download/${material.id}`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    // 2️⃣ Update frontend UI
+    setStudyMaterials((materials) =>
+      materials.map((m) =>
+        m.id === material.id ? { ...m, downloads: m.downloads + 1 } : m
+      )
+    );
+
+    // 3️⃣ Download File 
+   const response = await axios.get(
+      `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/materials/file/${material.id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      }
+    );
+
+    const blob = new Blob([response.data], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${material.title || "study-material"}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+
+  } catch (err) {
+    console.error("Download failed:", err);
+    toast.error("Download failed. Try again.");
+  }
+};
+
+
+  const sidebarItems = [
+    { icon: Home, label: 'Dashboard' },
+    { icon: TrendingUp, label: 'Popular' },
+    { icon: Star, label: 'Favorites' },
+    { icon: Upload, label: 'My Uploads' },
+    { icon: User, label: 'Profile' },
+  ];
+
+  const renderMaterialsList = (materials, currentViewMode) => (
+    <>
+      {materials.length === 0 ? (
+        <div className="text-center py-16">
+          <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No materials found</h3>
+          <p className="text-gray-600">Try adjusting your search or filters</p>
+        </div>
+      ) : (
+        <div
+          className={`grid gap-6 ${currentViewMode === "grid"
+              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+              : "grid-cols-1"
+            }`}
+        >
+          {materials.map((material) => (
+            <div
+              key={material.id}
+              className="flex flex-col bg-white rounded-2xl border border-gray-200 hover:border-blue-500 hover:shadow-lg transition-all duration-300 overflow-hidden group"
+            >
+              <div className="p-6 flex flex-col flex-1">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <FileText className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <button
+                    onClick={() => toggleFavorite(material.id)}
+                    className={`transition-all ${favorites.includes(material.id)
+                        ? "text-red-500 scale-110"
+                        : "text-gray-400 hover:text-red-400"
+                      }`}
+                  >
+                    <Heart
+                      className="w-5 h-5"
+                      fill={favorites.includes(material.id) ? "currentColor" : "none"}
+                    />
+                  </button>
+                </div>
+
+                {/* Title */}
+                <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                  {material.title}
+                </h3>
+
+                {/* Subject */}
+                <div className="mb-3">
+                  <span className="inline-block px-3 py-1 bg-blue-100 text-blue-600 rounded-lg text-sm font-semibold">
+                    {material.subject}
+                  </span>
+                </div>
+
+                {/* Description */}
+                <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-1">
+                  {material.description}
+                </p>
+
+                {/* Info */}
+                <div className="flex items-center gap-4 text-sm text-gray-600 mb-4 flex-wrap">
+                  <div className="flex items-center gap-1">
+                    <Users className="w-4 h-4" />
+                    <span>{material.author || "Unknown"}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    <span>{new Date(material.date).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Download className="w-4 h-4" />
+                    <span>{material.downloads || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Eye className="w-4 h-4" />
+                    <span>{material.views || 0}</span>
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-2 mt-auto">
+                  <button
+                    onClick={() => navigate(`/material/${material.id}`)}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition font-semibold text-sm"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Preview
+                  </button>
+                  <button
+                    onClick={() => handleDownload(material)}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-md transition font-semibold text-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+      )}
+    </>
+  );
+
+  const renderDashboardContent = () => (
+    <>
+      <div className="mb-8">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 mb-6">
+          <div className="flex-1 relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search notes, subjects, or topics..."
+              className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-600"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedSubject}
+              onChange={(e) => setSelectedSubject(e.target.value)}
+              className="px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-600"
+            >
+              {subjects.map((s) => <option key={s}>{s}</option>)}
+            </select>
+
+            <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+              <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-600'}`}><Grid className="w-5 h-5" /></button>
+              <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600'}`}><List className="w-5 h-5" /></button>
+            </div>
+          </div>
+        </div>
+        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-3">
+          Welcome Back, {user.fullName}!
+        </h1>
+      </div>
+
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">All Materials</h2>
+        {renderMaterialsList(filteredMaterials, viewMode)}
+      </div>
+    </>
+  );
+
+  const renderFilteredContent = () => (
+    <>
+      <div className="mb-8">
+        <button
+          onClick={() => setActiveTab('Dashboard')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 font-medium transition-colors"
+        >
+          <Home className="w-5 h-5" />
+          Back to Dashboard
+        </button>
+        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+          {activeTab === 'Favorites'
+            ? 'My Favorite Materials'
+            : activeTab === 'Popular'
+              ? 'Popular Study Materials'
+              : activeTab === 'My Uploads'
+                ? 'My Uploaded Materials'
+                : 'All Study Materials'}
+        </h1>
+        <p className="text-gray-600">{filteredMaterials.length} materials available</p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <div className="flex-1 relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search notes or subjects..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition"
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <select
+            value={selectedSubject}
+            onChange={(e) => setSelectedSubject(e.target.value)}
+            className="px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-500 font-medium"
+          >
+            {subjects.map((s) => <option key={s}>{s}</option>)}
+          </select>
+
+          <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900'}`}
+            >
+              <Grid className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900'}`}
+            >
+              <List className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {renderMaterialsList(filteredMaterials, viewMode)}
+    </>
+  );
+
+  const renderProfileSection = () => (
+    <div className="max-w-5xl mx-auto space-y-6">
+      <button
+        onClick={() => setActiveTab("Dashboard")}
+        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 font-medium transition-colors"
+      >
+        <Home className="w-5 h-5" />
+        Back to Dashboard
+      </button>
+
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-md">
+        <div className="h-32 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 relative">
+        </div>
+
+        <div className="px-6 pb-6 -mt-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 mb-4">
+            <div className="relative">
+              <div className="w-28 h-28 bg-white border-4 border-white rounded-xl flex items-center justify-center shadow-md">
+                <User className="w-14 h-14 text-blue-600" />
+              </div>
+            </div>
+
+            <div className="flex-1">
+              {isEditing ? (
+                <>
+                  <input
+                    type="text"
+                    value={user.fullName}
+                    onChange={(e) => setUser({ ...user, fullName: e.target.value })}
+                    className="text-2xl font-bold text-gray-900 mb-1 border-b border-gray-300 focus:outline-none w-full mt-14"
+                  />
+                  <input
+                    type="text"
+                    value={user.stream}
+                    onChange={(e) => setUser({ ...user, stream: e.target.value })}
+                    className="text-gray-600 text-sm border-b border-gray-300 focus:outline-none w-full"
+                  />
+                </>
+              ) : (
+                <>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-1 mt-14">
+                    {user.fullName}
+                  </h2>
+                  <p className="text-gray-600 text-sm">{user.stream}</p>
+                </>
+              )}
+
+              <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
+                <MapPin className="w-4 h-4" />
+                {user.address}
+              </div>
+            </div>
+
+            <button
+              onClick={isEditing ? handleSave : handleEdit}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm font-medium"
+            >
+              <Settings className="w-4 h-4" />
+              {isEditing ? "Save" : "Edit Profile"}
+            </button>
+          </div>
+
+          {isEditing && (
+            <div className="mt-6 bg-gray-50 p-5 rounded-xl space-y-4 border border-gray-100">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-500 mb-1">Location</label>
+                  <input
+                    type="text"
+                    value={user.address}
+                    onChange={(e) => setUser({ ...user, address: e.target.value })}
+                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-500 mb-1">Phone</label>
+                  <input
+                    type="text"
+                    value={user.contactNumber}
+                    onChange={(e) => setUser({ ...user, contactNumber: e.target.value })}
+                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-500 mb-1">About</label>
+                <textarea
+                  value={user.about}
+                  onChange={(e) => setUser({ ...user, about: e.target.value })}
+                  className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-500 mb-1">GitHub</label>
+                  <input
+                    type="text"
+                    value={user.github}
+                    onChange={(e) => setUser({ ...user, github: e.target.value })}
+                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-500 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={user.email}
+                    onChange={(e) => setUser({ ...user, email: e.target.value })}
+                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+            <StatCard
+              icon={<Upload className="w-4 h-4 text-blue-600" />}
+              label="Uploads"
+              value={studyMaterials.filter((m) => m.author === user.fullName).length}
+              color="blue"
+            />
+            <StatCard
+              icon={<Download className="w-4 h-4 text-green-600" />}
+              label="Downloads"
+              value="567"
+              color="green"
+            />
+            <StatCard
+              icon={<Star className="w-4 h-4 text-purple-600" />}
+              label="Rating"
+              value="4.8"
+              color="purple"
+            />
+            <StatCard
+              icon={<Award className="w-4 h-4 text-orange-600" />}
+              label="Reputation"
+              value="85"
+              color="orange"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 md:col-span-2">
+          <h3 className="font-semibold text-lg mb-3">About</h3>
+          <p className="text-gray-600 text-sm leading-relaxed">{user.about}</p>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-2xl p-5">
+          <h3 className="font-semibold text-lg mb-3">Contact</h3>
+          <div className="text-sm text-gray-600 space-y-2">
+            <p className="flex items-center gap-2">
+              <Phone className="w-4 h-4" /> {user.contactNumber}
+            </p>
+            <p className="flex items-center gap-2">
+              <Mail className="w-4 h-4" /> {user.email}
+            </p>
+            <p className="flex items-center gap-2">
+              <Github className="w-4 h-4" />{" "}
+              <a
+                href={`https://${user.github}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                {user.github}
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 flex gap-6">
+        <aside className="hidden lg:block w-64 mt-14">
+          <div className="space-y-3">
+            {sidebarItems.map((it) => {
+              const Icon = it.icon;
+              const active = (it.label === activeTab) || (activeTab === 'Dashboard' && it.label === 'Dashboard');
+              return (
+                <button
+                  key={it.label}
+                  onClick={() => setActiveTab(it.label)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-left ${active ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="truncate">{it.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
+            <div className="relative w-72 max-w-full bg-white h-full p-4 overflow-auto">
+              <div className="flex items-center justify-between mb-4">
+                <button onClick={() => setSidebarOpen(false)} className="p-2">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {sidebarItems.map((it) => {
+                  const Icon = it.icon;
+                  return (
+                    <button
+                      key={it.label}
+                      onClick={() => { setActiveTab(it.label); setSidebarOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left ${it.label === activeTab ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span>{it.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <main className="flex-1 mt-14">
+          {activeTab === 'Dashboard' && renderDashboardContent()}
+          {['Popular', 'Favorites', 'My Uploads'].includes(activeTab) && renderFilteredContent()}
+          {activeTab === 'Profile' && renderProfileSection()}
+        </main>
+      </div>
+
+      <nav className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-40 lg:hidden">
+        <div className="bg-white border border-gray-200 rounded-full px-3 py-2 shadow-lg flex items-center gap-4">
+          <button className="p-2 rounded-lg text-gray-600" onClick={() => setActiveTab('Dashboard')} aria-label="Home"><Home className="w-5 h-5" /></button>
+          <button className="p-2 rounded-lg text-gray-600" onClick={() => setActiveTab('Popular')} aria-label="Popular"><TrendingUp className="w-5 h-5" /></button>
+          <button className="p-2 rounded-lg text-gray-600" onClick={() => setActiveTab('My Uploads')} aria-label="Upload"><Upload className="w-5 h-5" /></button>
+          <button className="p-2 rounded-lg text-gray-600" onClick={() => setActiveTab('Favorites')} aria-label="Favorites"><Heart className="w-5 h-5" /></button>
+          <button className="p-2 rounded-lg text-gray-600" onClick={() => setActiveTab('Profile')} aria-label="Profile"><User className="w-5 h-5" /></button>
+        </div>
+      </nav>
+    </div>
+  );
+};
+
+export default Dashboard;
