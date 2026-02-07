@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, LogIn, LogOut } from 'lucide-react';
 import { useNavigate, Link } from "react-router-dom";
-import logo from '../assets/logo.png';
 
 const Navbar = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -180,7 +179,7 @@ const Navbar = () => {
                                 }}
                                 transition={{ duration: 2, repeat: Infinity }}
                             >
-                                <img src={logo} alt="StudyVault Logo" className="rounded-full" />
+                                SV
                             </motion.div>
                             <motion.div
                                 className="absolute inset-0 border-2 border-indigo-400/30 rounded-xl"
@@ -203,7 +202,7 @@ const Navbar = () => {
                                 animate={{ opacity: [0.7, 1, 0.7] }}
                                 transition={{ duration: 3, repeat: Infinity }}
                             >
-                                NerathiX
+                               
                             </motion.span>
                         </motion.div>
                     </motion.div>
