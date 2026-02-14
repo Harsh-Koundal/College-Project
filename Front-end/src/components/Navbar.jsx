@@ -162,33 +162,6 @@ const Navbar = () => {
                         transition={{ duration: 0.6, ease: "easeOut" }}
                     >
                         <motion.div
-                            className="relative w-12 h-10 flex items-center justify-center"
-                            whileHover={{ rotate: 6 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-400 via-purple-500 to-cyan-400 rounded-xl transform rotate-12 opacity-80 group-hover:opacity-100 transition-all duration-300"></div>
-                            <div className="absolute inset-0.5 bg-black rounded-xl"></div>
-                            <motion.div
-                                className="relative z-10 text-white font-black text-lg"
-                                animate={{
-                                    textShadow: [
-                                        "0 0 5px rgba(99, 102, 241, 0.5)",
-                                        "0 0 10px rgba(139, 92, 246, 0.8)",
-                                        "0 0 5px rgba(99, 102, 241, 0.5)",
-                                    ],
-                                }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                            >
-                                SV
-                            </motion.div>
-                            <motion.div
-                                className="absolute inset-0 border-2 border-indigo-400/30 rounded-xl"
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                            />
-                        </motion.div>
-
-                        <motion.div
                             className="flex flex-col"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
