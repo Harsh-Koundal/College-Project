@@ -24,12 +24,12 @@ if (!MONGODB_URI) {
   process.exit(1);
 }
 
-// --- CORS setup ---
+// --- CORS setup --
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  'https://studyvault.vercel.app',
+  'https://studyvault-rust.vercel.app/',
   'https://studyvault.com',
-  'http://localhost:5173'
+  'http://localhost:5173',
 ];
 
 app.use(cors({
