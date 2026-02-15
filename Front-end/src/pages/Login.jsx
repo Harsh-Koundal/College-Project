@@ -103,11 +103,8 @@ const LoginPage = () => {
         >
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-14 h-14 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <p className='font-bold text-white'>SV</p>
-            </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">StudyVault</h1>
+              <h1 className="text-4xl font-bold text-gray-800 tracking-tight">StudyVault</h1>
             </div>
           </div>
 
