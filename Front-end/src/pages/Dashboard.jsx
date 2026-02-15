@@ -776,7 +776,7 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 mt-10">
       <div className="max-w-8xl mx-auto px-4 md:px-6 py-6 flex gap-6">
         <aside className="hidden lg:block w-64 mt-14">
           <div className="space-y-3">
