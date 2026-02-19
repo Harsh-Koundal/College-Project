@@ -16,9 +16,9 @@ import upload from "../middleware/upload.js";
 const router = express.Router();
 
 // Public routes
-router.get("/", getAllMaterials);
-router.get("/popular", getPopularMaterials);
-router.get("/favorites", authMiddleware, getFavorites);
+router.get("/",authMiddleware,getAllMaterials);
+router.get("/popular",authMiddleware,getPopularMaterials);
+router.get("/favorites",authMiddleware, getFavorites);
 router.put("/download/:id", authMiddleware, updateDownloadCount);
 router.get("/file/:id", authMiddleware, downloadMaterialFile);
 
