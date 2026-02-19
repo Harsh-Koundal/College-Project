@@ -191,9 +191,9 @@ To create an accessible repository of educational resources where students colla
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| `POST` | `/signin` | User login | ❌ |
-| `POST` | `/signup` | User registration | ❌ |
-| `GET` | `/verify/:token` | Email verification | ❌ |
+| `POST` | `/signin` | User login | ✅ |
+| `POST` | `/signup` | User registration | ✅ |
+| `GET` | `/verify/:token` | Email verification | ✅ |
 
 #### Profile Routes (`/api/profile`)
 
@@ -207,8 +207,8 @@ To create an accessible repository of educational resources where students colla
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| `GET` | `/` | List all materials | ❌ |
-| `GET` | `/popular` | Top 10 by downloads | ❌ |
+| `GET` | `/` | List all materials | ✅ |
+| `GET` | `/popular` | Top 10 by downloads | ✅ |
 | `GET` | `/favorites` | User's favorites | ✅ |
 | `POST` | `/uploads` | Upload material | ✅ |
 | `GET` | `/my-uploads` | User's uploads | ✅ |
