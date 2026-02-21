@@ -2,9 +2,9 @@
 # 📚 StudyVault — Complete & In-Depth Documentation
 
 **Version:** 1.0.0  
-**Author:** Harsh Koundal  
-**Created:** February 17, 2026  
+**Author:** Harsh Koundal   
 **Project Repository:** [Harsh-Koundal/College-Project](https://github.com/Harsh-Koundal/College-Project)
+**Live Link:** [studyvault.com](https://studyvault-eight.vercel.app)
 
 ---
 
