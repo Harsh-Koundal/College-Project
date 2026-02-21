@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
   const nevigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false);
   const [userData, setUserData] = useState({
@@ -32,6 +33,7 @@ const LoginPage = () => {
     }
 
     try {
+      setLoading(true);
       if (isLogin) {
         const res = await axios.post(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/auth/signin`, {
           email: userData.email,
@@ -69,6 +71,8 @@ const LoginPage = () => {
       console.error(err);
       const msg = err.response?.data?.msg || err.message || "Something went wrong!";
       toast.error(msg)
+    }finally {
+      setLoading(false);
     }
   };
 
@@ -210,7 +214,7 @@ const LoginPage = () => {
           </div>
 
           {/* Form Fields */}
-          <div className="space-y-5">
+          <form className="space-y-5" onSubmit={handleSubmit}>
             {/* Full Name - Only for Register */}
             {!isLogin && (
               <div>
@@ -222,6 +226,7 @@ const LoginPage = () => {
                   <input
                     type="text"
                     name="fullName"
+                    required
                     value={userData.fullName}
                     onChange={handleInputChange}
                     placeholder="John Doe"
@@ -241,6 +246,7 @@ const LoginPage = () => {
                 <input
                   type="email"
                   name="email"
+                  required
                   value={userData.email}
                   onChange={handleInputChange}
                   placeholder="you@example.com"
@@ -259,6 +265,7 @@ const LoginPage = () => {
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
+                  required
                   value={userData.password}
                   onChange={handleInputChange}
                   placeholder="••••••••"
@@ -285,6 +292,7 @@ const LoginPage = () => {
                   <input
                     type={showPassword ? "text" : "password"}
                     name="confirmPassword"
+                    required
                     value={userData.confirmPassword}
                     onChange={handleInputChange}
                     placeholder="••••••••"
@@ -303,15 +311,22 @@ const LoginPage = () => {
 
             {/* Submit Button */}
             <motion.button
-              type="button"
-              onClick={handleSubmit}
+              type="submit"
+              disabled={loading}
               className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              {isLogin ? 'Login' : 'Register'}
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  {/* <Spinner className="w-5 h-5 mr-2" /> */}
+                  Processing...
+                </span>
+              ) : (
+                isLogin ? 'Login' : 'Register'
+              )}
             </motion.button>
-          </div>
+          </form>
 
           {/* Footer */}
           <p className="text-center text-xs text-gray-500 mt-6">
